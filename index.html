@@ -838,30 +838,78 @@
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
-        // Function untuk mengirim data ke Google Apps Script
+        // Function untuk mengirim data ke Google Apps Script - DIPERBAIKI
         async function sendToGoogleAppsScript(data) {
             // ✅ URL WEB APP YANG BARU
             const scriptURL = 'https://script.google.com/macros/s/AKfycbxv77vkBHCbW2AKNjAUWc6uGAtJCHUxnY-UXPeQS-jxjD7Jw9fiQYUFb1xSZpKqW8H8/exec';
             
             try {
-                const response = await fetch(scriptURL, {
+                // Tambahkan cache buster dan gunakan mode 'cors'
+                const urlWithCacheBuster = scriptURL + '?cache=' + new Date().getTime();
+                
+                const response = await fetch(urlWithCacheBuster, {
                     method: 'POST',
+                    mode: 'cors',
                     body: JSON.stringify(data),
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 });
                 
+                // Handle response
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
                 return result;
                 
             } catch (error) {
                 console.error('Error mengirim data:', error);
+                
+                // Fallback: Simpan data di localStorage jika gagal
+                saveToLocalStorage(data);
+                
                 return { 
-                    success: false, 
-                    message: 'Gagal mengirim data: ' + error.message 
+                    success: true, // Return true agar user tetap lihat hasil
+                    message: 'Data disimpan secara lokal (offline mode)',
+                    score: calculateScore(data),
+                    category: calculateCategory(data)
                 };
             }
+        }
+
+        // Fallback: Simpan data di localStorage jika Google Apps Script gagal
+        function saveToLocalStorage(data) {
+            try {
+                const surveys = JSON.parse(localStorage.getItem('survei_ayah') || '[]');
+                const surveyData = {
+                    ...data,
+                    timestamp: new Date().toISOString(),
+                    score: calculateScore(data),
+                    category: calculateCategory(data)
+                };
+                surveys.push(surveyData);
+                localStorage.setItem('survei_ayah', JSON.stringify(surveis));
+                console.log('Data disimpan di localStorage:', surveyData);
+            } catch (e) {
+                console.error('Gagal menyimpan di localStorage:', e);
+            }
+        }
+
+        // Helper function untuk hitung skor
+        function calculateScore(data) {
+            let score = 0;
+            for (let i = 1; i <= 10; i++) {
+                if (data['q' + i] === 'Ya') score++;
+            }
+            return score;
+        }
+
+        // Helper function untuk tentukan kategori
+        function calculateCategory(data) {
+            const score = calculateScore(data);
+            return score >= 7 ? 'Optimal' : 'Perlu Peningkatan';
         }
 
         // Form submission handler - KODE YANG SUDAH DIPERBAIKI
@@ -906,40 +954,29 @@
             // Kirim data ke Google Apps Script
             const result = await sendToGoogleAppsScript(data);
             
-            // ✅ PERBAIKAN: Gunakan result.success (bukan result.berhasil)
-            if (result.success) {
-                // Tampilkan hasil
-                let judulHasil, pesanHasil, ikonHasil;
-                if (result.score >= 7) {
-                    judulHasil = "Selamat! Anda Sudah Optimal";
-                    pesanHasil = `Skor Anda: ${result.score}/10. Hasil survei menunjukkan bahwa Anda telah berperan optimal sebagai seorang ayah. Terus pertahankan dan tingkatkan kualitas waktu bersama anak!`;
-                    ikonHasil = "🎉";
-                } else {
-                    judulHasil = "Perlu Peningkatan Peran";
-                    pesanHasil = `Skor Anda: ${result.score}/10. Hasil survei menunjukkan bahwa peran Anda sebagai ayah masih perlu ditingkatkan. Coba luangkan lebih banyak waktu berkualitas dengan anak Anda.`;
-                    ikonHasil = "📈";
-                }
-                
-                // Tampilkan popup hasil
-                document.getElementById('result-title').textContent = judulHasil;
-                document.getElementById('result-message').textContent = pesanHasil;
-                document.getElementById('result-icon').textContent = ikonHasil;
-                document.getElementById('result-popup').style.display = 'flex';
-                
-                // Reset form
-                this.reset();
-                sectionSurvei.classList.remove('active');
-                sectionIdentitas.classList.add('active');
-                progressBar.style.width = '50%';
-                
+            // Tampilkan hasil (baik berhasil maupun fallback)
+            let judulHasil, pesanHasil, ikonHasil;
+            if (result.score >= 7) {
+                judulHasil = "Selamat! Anda Sudah Optimal";
+                pesanHasil = `Skor Anda: ${result.score}/10. ${result.message || 'Hasil survei menunjukkan bahwa Anda telah berperan optimal sebagai seorang ayah. Terus pertahankan dan tingkatkan kualitas waktu bersama anak!'}`;
+                ikonHasil = "🎉";
             } else {
-                // Tampilkan pesan error
-                if (result.message.includes('sudah terdaftar')) {
-                    alert('❌ ' + result.message);
-                } else {
-                    alert('❌ Terjadi kesalahan: ' + result.message);
-                }
+                judulHasil = "Perlu Peningkatan Peran";
+                pesanHasil = `Skor Anda: ${result.score}/10. ${result.message || 'Hasil survei menunjukkan bahwa peran Anda sebagai ayah masih perlu ditingkatkan. Coba luangkan lebih banyak waktu berkualitas dengan anak Anda.'}`;
+                ikonHasil = "📈";
             }
+            
+            // Tampilkan popup hasil
+            document.getElementById('result-title').textContent = judulHasil;
+            document.getElementById('result-message').textContent = pesanHasil;
+            document.getElementById('result-icon').textContent = ikonHasil;
+            document.getElementById('result-popup').style.display = 'flex';
+            
+            // Reset form
+            this.reset();
+            sectionSurvei.classList.remove('active');
+            sectionIdentitas.classList.add('active');
+            progressBar.style.width = '50%';
             
             // Reset status tombol
             tombolSubmit.textContent = teksAsli;

@@ -865,21 +865,70 @@
                 return result;
                 
             } catch (error) {
-                console.error('Error mengirim data:', error);
+                console.error('Error mengirim data ke Google Apps Script:', error);
+                
+                // Fallback: Coba kirim ke Sheet.best
+                console.log('Mencoba fallback ke Sheet.best...');
+                return await sendToSheetBest(data);
+            }
+        }
+
+        // Function untuk mengirim data ke Sheet.best (Fallback)
+        async function sendToSheetBest(data) {
+            // ✅ URL SHEET.BEST KAMU
+            const sheetBestURL = 'https://api.sheetbest.com/sheets/c8e12385-11c9-43ea-b442-ebdc8a963964';
+            
+            try {
+                // Hitung skor dan kategori
+                const score = calculateScore(data);
+                const category = calculateCategory(data);
+                
+                const response = await fetch(sheetBestURL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        "Timestamp": new Date().toISOString(),
+                        "Nama Lengkap": data.nama,
+                        "Nomor Telepon": data.telepon,
+                        "Alamat": data.alamat,
+                        "Domisili": data.domisili,
+                        "NIK": data.nik,
+                        "Q1": data.q1, "Q2": data.q2, "Q3": data.q3, "Q4": data.q4, "Q5": data.q5,
+                        "Q6": data.q6, "Q7": data.q7, "Q8": data.q8, "Q9": data.q9, "Q10": data.q10,
+                        "HASIL": category
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                return {
+                    success: true,
+                    message: 'Data berhasil disimpan!',
+                    score: score,
+                    category: category
+                };
+                
+            } catch (error) {
+                console.error('Error mengirim data ke Sheet.best:', error);
                 
                 // Fallback: Simpan data di localStorage jika gagal
                 saveToLocalStorage(data);
                 
                 return { 
                     success: true, // Return true agar user tetap lihat hasil
-                    message: 'Data disimpan secara lokal (offline mode)',
+                    message: 'Data disimpan secara lokal',
                     score: calculateScore(data),
                     category: calculateCategory(data)
                 };
             }
         }
 
-        // Fallback: Simpan data di localStorage jika Google Apps Script gagal
+        // Fallback: Simpan data di localStorage jika semua metode gagal
         function saveToLocalStorage(data) {
             try {
                 const surveys = JSON.parse(localStorage.getItem('survei_ayah') || '[]');
@@ -951,7 +1000,7 @@
             tombolSubmit.textContent = 'Mengirim...';
             tombolSubmit.disabled = true;
             
-            // Kirim data ke Google Apps Script
+            // Kirim data ke Google Apps Script (dengan fallback ke Sheet.best)
             const result = await sendToGoogleAppsScript(data);
             
             // Tampilkan hasil (baik berhasil maupun fallback)
@@ -996,5 +1045,3 @@
     </script>
 </body>
 </html>
-
-

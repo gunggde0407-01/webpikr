@@ -185,7 +185,7 @@
             color: #444;
         }
 
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 12px 15px;
             border: 1px solid #ddd;
@@ -194,10 +194,15 @@
             transition: border-color 0.3s ease;
         }
 
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
             border-color: #1a73e8;
             outline: none;
             box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
         }
 
         .error-message {
@@ -489,14 +494,9 @@
                     <div class="error-message" id="telepon-error">Nomor telepon harus diisi dan dimulai dengan 08</div>
                 </div>
                 <div class="form-group">
-                    <label for="alamat">Alamat *</label>
-                    <input type="text" id="alamat" name="alamat" required>
-                    <div class="error-message" id="alamat-error">Alamat harus diisi</div>
-                </div>
-                <div class="form-group">
-                    <label for="domisili">Domisili *</label>
-                    <input type="text" id="domisili" name="domisili" required>
-                    <div class="error-message" id="domisili-error">Domisili harus diisi</div>
+                    <label for="alamat">Alamat Lengkap *</label>
+                    <textarea id="alamat" name="alamat" placeholder="Masukkan alamat lengkap termasuk kota/kabupaten dan provinsi" required></textarea>
+                    <div class="error-message" id="alamat-error">Alamat lengkap harus diisi</div>
                 </div>
                 <div class="form-group">
                     <label for="nik">NIK *</label>
@@ -560,7 +560,7 @@
                 </div>
 
                 <div class="question">
-                    <div class="question-text">4️⃣ Apakah dalam 1 Minggu terakhir ayah rekreasi bersama anak (jalan-jalan, menonton, dll)?</div>
+                    <div class="question-text">4️⃣ Apakah dalam 1 Minggu terakhir ayah rekreasi bersama anak (jalan-jalan, menonton, dan lain-lain)?</div>
                     <div class="options">
                         <div class="option">
                             <input type="radio" id="q4-ya" name="q4" value="Ya" required>
@@ -575,7 +575,7 @@
                 </div>
 
                 <div class="question">
-                    <div class="question-text">5️⃣ Apakah dalam 1 Minggu terakhir ayah melibatkan anak dalam kegiatan rumah tangga (membersihkan rumah, mencuci piring, dll)?</div>
+                    <div class="question-text">5️⃣ Apakah dalam 1 Minggu terakhir ayah melibatkan anak dalam kegiatan rumah tangga (membersihkan rumah, mencuci piring, dan lain-lain)?</div>
                     <div class="options">
                         <div class="option">
                             <input type="radio" id="q5-ya" name="q5" value="Ya" required>
@@ -635,7 +635,7 @@
                 </div>
 
                 <div class="question">
-                    <div class="question-text">9️⃣ Apakah ayah mengetahui pergaulan anaknya (siapa teman-temannya, kegiatan luar sekolah, dsb)?</div>
+                    <div class="question-text">9️⃣ Apakah ayah mengetahui pergaulan anaknya (siapa teman-temannya, kegiatan luar sekolah, dan lain sebagainya)?</div>
                     <div class="options">
                         <div class="option">
                             <input type="radio" id="q9-ya" name="q9" value="Ya" required>
@@ -810,16 +810,6 @@
                 alamatError.style.display = 'none';
             }
             
-            // Domisili validation
-            const domisili = document.getElementById('domisili');
-            const domisiliError = document.getElementById('domisili-error');
-            if (!domisili.value.trim()) {
-                domisiliError.style.display = 'block';
-                isValid = false;
-            } else {
-                domisiliError.style.display = 'none';
-            }
-            
             // NIK validation
             const nik = document.getElementById('nik');
             const nikError = document.getElementById('nik-error');
@@ -841,7 +831,7 @@
         // Function untuk mengirim data ke Google Apps Script - DIPERBAIKI
         async function sendToGoogleAppsScript(data) {
             // ✅ URL WEB APP YANG BARU
-            const scriptURL = 'https://script.google.com/macros/s/AKfycbwalUsdBXiNUpFTYIpy6A9hSPo3QaIDo6BrH6Ashh-Ew-LD_ae3RQxea-_MahDfV9T3/exec';
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbxv77vkBHCbW2AKNjAUWc6uGAtJCHUxnY-UXPeQS-jxjD7Jw9fiQYUFb1xSZpKqW8H8/exec';
             
             try {
                 // Tambahkan cache buster dan gunakan mode 'cors'
@@ -865,70 +855,21 @@
                 return result;
                 
             } catch (error) {
-                console.error('Error mengirim data ke Google Apps Script:', error);
-                
-                // Fallback: Coba kirim ke Sheet.best
-                console.log('Mencoba fallback ke Sheet.best...');
-                return await sendToSheetBest(data);
-            }
-        }
-
-        // Function untuk mengirim data ke Sheet.best (Fallback)
-        async function sendToSheetBest(data) {
-            // ✅ URL SHEET.BEST KAMU
-            const sheetBestURL = 'https://api.sheetbest.com/sheets/c8e12385-11c9-43ea-b442-ebdc8a963964';
-            
-            try {
-                // Hitung skor dan kategori
-                const score = calculateScore(data);
-                const category = calculateCategory(data);
-                
-                const response = await fetch(sheetBestURL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        "Timestamp": new Date().toISOString(),
-                        "Nama Lengkap": data.nama,
-                        "Nomor Telepon": data.telepon,
-                        "Alamat": data.alamat,
-                        "Domisili": data.domisili,
-                        "NIK": data.nik,
-                        "Q1": data.q1, "Q2": data.q2, "Q3": data.q3, "Q4": data.q4, "Q5": data.q5,
-                        "Q6": data.q6, "Q7": data.q7, "Q8": data.q8, "Q9": data.q9, "Q10": data.q10,
-                        "HASIL": category
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                return {
-                    success: true,
-                    message: 'Data berhasil disimpan!',
-                    score: score,
-                    category: category
-                };
-                
-            } catch (error) {
-                console.error('Error mengirim data ke Sheet.best:', error);
+                console.error('Error mengirim data:', error);
                 
                 // Fallback: Simpan data di localStorage jika gagal
                 saveToLocalStorage(data);
                 
                 return { 
                     success: true, // Return true agar user tetap lihat hasil
-                    message: 'Data disimpan secara lokal',
+                    message: 'Data disimpan secara lokal (offline mode)',
                     score: calculateScore(data),
                     category: calculateCategory(data)
                 };
             }
         }
 
-        // Fallback: Simpan data di localStorage jika semua metode gagal
+        // Fallback: Simpan data di localStorage jika Google Apps Script gagal
         function saveToLocalStorage(data) {
             try {
                 const surveys = JSON.parse(localStorage.getItem('survei_ayah') || '[]');
@@ -1000,7 +941,7 @@
             tombolSubmit.textContent = 'Mengirim...';
             tombolSubmit.disabled = true;
             
-            // Kirim data ke Google Apps Script (dengan fallback ke Sheet.best)
+            // Kirim data ke Google Apps Script
             const result = await sendToGoogleAppsScript(data);
             
             // Tampilkan hasil (baik berhasil maupun fallback)

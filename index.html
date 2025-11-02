@@ -420,6 +420,7 @@
             background-color: #f8f9fa;
             border-radius: 10px;
             border: 2px dashed #dee2e6;
+            display: none;
         }
 
         .logo-upload p {
@@ -716,7 +717,7 @@
     </div>
 
     <script>
-        // ✅ URL WEB APP ANDA
+        // URL Web App Google Apps Script
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzSQHPQRj2RGJD_9Ztm1yBGiJUrrpouNNgmfTBXceGz3CiBnQ1j_6EhtY7NbyOc1Dhpyw/exec';
 
         // Simulate loading process
@@ -742,7 +743,7 @@
                 }
             }, 100);
             
-            // Check if logo exists and show upload section if not
+            // Check if logo exists
             checkLogoExists();
         });
 
@@ -755,7 +756,7 @@
                 document.querySelector('.logo-upload').style.display = 'none';
             }
             logo.onerror = function() {
-                console.log('Logo tidak ditemukan, menampilkan opsi unggah');
+                console.log('Logo tidak ditemukan');
                 document.querySelector('.logo-upload').style.display = 'block';
             }
         }
@@ -854,7 +855,7 @@
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
-        // Function untuk mengirim data ke Google Apps Script - DIPERBAIKI
+        // Function untuk mengirim data ke Google Apps Script
         function sendToGoogleAppsScript(data) {
             return new Promise((resolve) => {
                 const xhr = new XMLHttpRequest();
@@ -943,7 +944,7 @@
             }
         }
 
-        // Form submission handler - DIPERBAIKI
+        // Form submission handler
         document.getElementById('survey-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -983,9 +984,11 @@
             tombolSubmit.textContent = 'Mengirim...';
             tombolSubmit.disabled = true;
             
+            let result;
+            
             try {
                 // Kirim data ke Google Apps Script
-                const result = await sendToGoogleAppsScript(data);
+                result = await sendToGoogleAppsScript(data);
                 console.log('Result from server:', result);
                 
                 if (result.success) {
@@ -1011,6 +1014,12 @@
                     
                     showGlobalMessage('✅ ' + result.message, 'success');
                     
+                    // Reset form
+                    this.reset();
+                    sectionSurvei.classList.remove('active');
+                    sectionIdentitas.classList.add('active');
+                    progressBar.style.width = '50%';
+                    
                 } else {
                     // Error - tampilkan pesan error
                     showGlobalMessage('❌ ' + result.message, 'error');
@@ -1021,14 +1030,6 @@
                 console.error('Unexpected error:', error);
                 showGlobalMessage('❌ Terjadi kesalahan sistem', 'error');
             } finally {
-                // Reset form hanya jika berhasil
-                if (result && result.success) {
-                    this.reset();
-                    sectionSurvei.classList.remove('active');
-                    sectionIdentitas.classList.add('active');
-                    progressBar.style.width = '50%';
-                }
-                
                 // Reset status tombol
                 tombolSubmit.textContent = teksAsli;
                 tombolSubmit.disabled = false;

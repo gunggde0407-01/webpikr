@@ -716,7 +716,7 @@
     </div>
 
     <script>
-        // ✅ URL WEB APP ANDA YANG BARU
+        // ✅ URL WEB APP ANDA
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzSQHPQRj2RGJD_9Ztm1yBGiJUrrpouNNgmfTBXceGz3CiBnQ1j_6EhtY7NbyOc1Dhpyw/exec';
 
         // Simulate loading process
@@ -854,31 +854,58 @@
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
-        // Function untuk mengirim data ke Google Apps Script
-        async function sendToGoogleAppsScript(data) {
-            try {
-                console.log('Mengirim data ke:', WEB_APP_URL);
-                console.log('Data:', data);
+        // Function untuk mengirim data ke Google Apps Script - DIPERBAIKI
+        function sendToGoogleAppsScript(data) {
+            return new Promise((resolve) => {
+                const xhr = new XMLHttpRequest();
+                const url = WEB_APP_URL + '?timestamp=' + new Date().getTime();
                 
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
+                xhr.open('POST', url, true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
                 
-                const result = await response.json();
-                console.log('Response dari server:', result);
-                return result;
-                
-            } catch (error) {
-                console.error('Error mengirim data:', error);
-                return { 
-                    success: false,
-                    message: 'Gagal mengirim data: ' + error.message
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        console.log('Response status:', xhr.status);
+                        console.log('Response text:', xhr.responseText);
+                        
+                        if (xhr.status === 200) {
+                            try {
+                                const result = JSON.parse(xhr.responseText);
+                                resolve(result);
+                            } catch (e) {
+                                resolve({
+                                    success: false,
+                                    message: 'Error parsing response: ' + e.message
+                                });
+                            }
+                        } else {
+                            resolve({
+                                success: false,
+                                message: 'HTTP Error: ' + xhr.status
+                            });
+                        }
+                    }
                 };
-            }
+                
+                xhr.onerror = function() {
+                    console.error('XHR Network Error');
+                    resolve({
+                        success: false,
+                        message: 'Network error occurred'
+                    });
+                };
+                
+                xhr.timeout = 30000;
+                xhr.ontimeout = function() {
+                    resolve({
+                        success: false,
+                        message: 'Request timeout'
+                    });
+                };
+                
+                console.log('Data yang dikirim:', data);
+                xhr.send(JSON.stringify(data));
+            });
         }
 
         // Helper function untuk hitung skor
@@ -906,7 +933,6 @@
                 successEl.style.display = 'block';
                 errorEl.style.display = 'none';
                 
-                // Auto hide setelah 5 detik
                 setTimeout(() => {
                     successEl.style.display = 'none';
                 }, 5000);
@@ -917,9 +943,11 @@
             }
         }
 
-        // Form submission handler
+        // Form submission handler - DIPERBAIKI
         document.getElementById('survey-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            console.log('Form submission started');
             
             // Validasi pertanyaan survei
             let semuaTerjawab = true;
@@ -947,50 +975,64 @@
                 data[key] = value;
             }
             
+            console.log('Data form:', data);
+            
             // Tampilkan status loading
             const tombolSubmit = document.querySelector('.submit-btn');
             const teksAsli = tombolSubmit.textContent;
             tombolSubmit.textContent = 'Mengirim...';
             tombolSubmit.disabled = true;
             
-            // Kirim data ke Google Apps Script
-            const result = await sendToGoogleAppsScript(data);
-            
-            // Tampilkan hasil
-            if (result.success) {
-                // Success - tampilkan popup hasil
-                let judulHasil, pesanHasil, ikonHasil;
-                if (result.score >= 7) {
-                    judulHasil = "Selamat! Anda Sudah Optimal";
-                    pesanHasil = `Skor Anda: ${result.score}/10. ${result.message || 'Hasil survei menunjukkan bahwa Anda telah berperan optimal sebagai seorang ayah.'}`;
-                    ikonHasil = "🎉";
+            try {
+                // Kirim data ke Google Apps Script
+                const result = await sendToGoogleAppsScript(data);
+                console.log('Result from server:', result);
+                
+                if (result.success) {
+                    // Success - tampilkan popup hasil
+                    const score = result.score || calculateScore(data);
+                    const isOptimal = score >= 7;
+                    
+                    let judulHasil, pesanHasil, ikonHasil;
+                    if (isOptimal) {
+                        judulHasil = "Selamat! Anda Sudah Optimal";
+                        pesanHasil = `Skor Anda: ${score}/10. ${result.message || 'Hasil survei menunjukkan bahwa Anda telah berperan optimal sebagai seorang ayah.'}`;
+                        ikonHasil = "🎉";
+                    } else {
+                        judulHasil = "Perlu Peningkatan Peran";
+                        pesanHasil = `Skor Anda: ${score}/10. ${result.message || 'Hasil survei menunjukkan bahwa peran Anda sebagai ayah masih perlu ditingkatkan.'}`;
+                        ikonHasil = "📈";
+                    }
+                    
+                    document.getElementById('result-title').textContent = judulHasil;
+                    document.getElementById('result-message').textContent = pesanHasil;
+                    document.getElementById('result-icon').textContent = ikonHasil;
+                    document.getElementById('result-popup').style.display = 'flex';
+                    
+                    showGlobalMessage('✅ ' + result.message, 'success');
+                    
                 } else {
-                    judulHasil = "Perlu Peningkatan Peran";
-                    pesanHasil = `Skor Anda: ${result.score}/10. ${result.message || 'Hasil survei menunjukkan bahwa peran Anda sebagai ayah masih perlu ditingkatkan.'}`;
-                    ikonHasil = "📈";
+                    // Error - tampilkan pesan error
+                    showGlobalMessage('❌ ' + result.message, 'error');
+                    alert('Error: ' + result.message);
                 }
                 
-                document.getElementById('result-title').textContent = judulHasil;
-                document.getElementById('result-message').textContent = pesanHasil;
-                document.getElementById('result-icon').textContent = ikonHasil;
-                document.getElementById('result-popup').style.display = 'flex';
+            } catch (error) {
+                console.error('Unexpected error:', error);
+                showGlobalMessage('❌ Terjadi kesalahan sistem', 'error');
+            } finally {
+                // Reset form hanya jika berhasil
+                if (result && result.success) {
+                    this.reset();
+                    sectionSurvei.classList.remove('active');
+                    sectionIdentitas.classList.add('active');
+                    progressBar.style.width = '50%';
+                }
                 
-                showGlobalMessage('✅ Data berhasil dikirim ke database!', 'success');
-                
-            } else {
-                // Error - tampilkan pesan error
-                showGlobalMessage('❌ ' + result.message, 'error');
+                // Reset status tombol
+                tombolSubmit.textContent = teksAsli;
+                tombolSubmit.disabled = false;
             }
-            
-            // Reset form
-            this.reset();
-            sectionSurvei.classList.remove('active');
-            sectionIdentitas.classList.add('active');
-            progressBar.style.width = '50%';
-            
-            // Reset status tombol
-            tombolSubmit.textContent = teksAsli;
-            tombolSubmit.disabled = false;
         });
 
         // Close popup

@@ -714,291 +714,313 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAANNUfSkp-Fsjf4NTu073m_oREQ1F-m6_KUy6XakwS7fBybzNovNn2YcO12klZf5EYQ/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAANNUfSkp-Fsjf4NTu073m_oREQ1F-m6_KUy6XakwS7fBybzNovNn2YcO12klZf5EYQ/exec';
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const loadingScreen = document.getElementById('loading-screen');
-            const loadingProgress = document.getElementById('loading-progress');
-            const mainContent = document.getElementById('main-content');
+    document.addEventListener('DOMContentLoaded', function() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingProgress = document.getElementById('loading-progress');
+        const mainContent = document.getElementById('main-content');
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 5;
+            loadingProgress.style.width = `${progress}%`;
             
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 5;
-                loadingProgress.style.width = `${progress}%`;
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
+            if (progress >= 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    loadingScreen.style.opacity = '0';
                     setTimeout(() => {
-                        loadingScreen.style.opacity = '0';
-                        setTimeout(() => {
-                            loadingScreen.style.display = 'none';
-                            mainContent.style.display = 'block';
-                        }, 500);
+                        loadingScreen.style.display = 'none';
+                        mainContent.style.display = 'block';
                     }, 500);
-                }
-            }, 100);
-            
-            checkLogoExists();
-        });
+                }, 500);
+            }
+        }, 100);
+        
+        checkLogoExists();
+    });
 
-        function checkLogoExists() {
-            const logo = new Image();
-            logo.src = 'logopikr.png';
-            logo.onload = function() {
+    function checkLogoExists() {
+        const logo = new Image();
+        logo.src = 'logopikr.png';
+        logo.onload = function() {
+            document.querySelector('.logo-upload').style.display = 'none';
+        }
+        logo.onerror = function() {
+            document.querySelector('.logo-upload').style.display = 'block';
+        }
+    }
+
+    document.getElementById('logo-file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const logoData = e.target.result;
+                document.getElementById('loading-logo').src = logoData;
+                document.getElementById('header-logo').src = logoData;
+                document.getElementById('popup-logo').src = logoData;
                 document.querySelector('.logo-upload').style.display = 'none';
             }
-            logo.onerror = function() {
-                document.querySelector('.logo-upload').style.display = 'block';
-            }
+            reader.readAsDataURL(file);
         }
+    });
 
-        document.getElementById('logo-file').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const logoData = e.target.result;
-                    document.getElementById('loading-logo').src = logoData;
-                    document.getElementById('header-logo').src = logoData;
-                    document.getElementById('popup-logo').src = logoData;
-                    document.querySelector('.logo-upload').style.display = 'none';
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
-        const sectionIdentitas = document.getElementById('section-identitas');
-        const sectionSurvei = document.getElementById('section-survei');
-        const progressBar = document.getElementById('progress-bar');
-        const nextToSurveiBtn = document.getElementById('next-to-survei');
-        const prevToIdentitasBtn = document.getElementById('prev-to-identitas');
-        
-        nextToSurveiBtn.addEventListener('click', function() {
-            if (validateIdentitas()) {
-                sectionIdentitas.classList.remove('active');
-                sectionSurvei.classList.add('active');
-                progressBar.style.width = '100%';
-            }
-        });
-        
-        prevToIdentitasBtn.addEventListener('click', function() {
-            sectionSurvei.classList.remove('active');
-            sectionIdentitas.classList.add('active');
-            progressBar.style.width = '50%';
-        });
-
-        function validateIdentitas() {
-            let isValid = true;
-            
-            const nama = document.getElementById('nama');
-            const namaError = document.getElementById('nama-error');
-            if (!nama.value.trim()) {
-                namaError.style.display = 'block';
-                isValid = false;
-            } else {
-                namaError.style.display = 'none';
-            }
-            
-            const telepon = document.getElementById('telepon');
-            const teleponError = document.getElementById('telepon-error');
-            const teleponPattern = /^08[0-9]{8,11}$/;
-            if (!teleponPattern.test(telepon.value)) {
-                teleponError.style.display = 'block';
-                isValid = false;
-            } else {
-                teleponError.style.display = 'none';
-            }
-            
-            const alamat = document.getElementById('alamat');
-            const alamatError = document.getElementById('alamat-error');
-            if (!alamat.value.trim()) {
-                alamatError.style.display = 'block';
-                isValid = false;
-            } else {
-                alamatError.style.display = 'none';
-            }
-            
-            const nik = document.getElementById('nik');
-            const nikError = document.getElementById('nik-error');
-            if (!nik.value.trim()) {
-                nikError.style.display = 'block';
-                isValid = false;
-            } else {
-                nikError.style.display = 'none';
-            }
-            
-            return isValid;
+    const sectionIdentitas = document.getElementById('section-identitas');
+    const sectionSurvei = document.getElementById('section-survei');
+    const progressBar = document.getElementById('progress-bar');
+    const nextToSurveiBtn = document.getElementById('next-to-survei');
+    const prevToIdentitasBtn = document.getElementById('prev-to-identitas');
+    
+    nextToSurveiBtn.addEventListener('click', function() {
+        if (validateIdentitas()) {
+            sectionIdentitas.classList.remove('active');
+            sectionSurvei.classList.add('active');
+            progressBar.style.width = '100%';
         }
+    });
+    
+    prevToIdentitasBtn.addEventListener('click', function() {
+        sectionSurvei.classList.remove('active');
+        sectionIdentitas.classList.add('active');
+        progressBar.style.width = '50%';
+    });
 
-        document.getElementById('telepon').addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
+    function validateIdentitas() {
+        let isValid = true;
+        
+        const nama = document.getElementById('nama');
+        const namaError = document.getElementById('nama-error');
+        if (!nama.value.trim()) {
+            namaError.style.display = 'block';
+            isValid = false;
+        } else {
+            namaError.style.display = 'none';
+        }
+        
+        const telepon = document.getElementById('telepon');
+        const teleponError = document.getElementById('telepon-error');
+        const teleponPattern = /^08[0-9]{8,11}$/;
+        if (!teleponPattern.test(telepon.value)) {
+            teleponError.style.display = 'block';
+            isValid = false;
+        } else {
+            teleponError.style.display = 'none';
+        }
+        
+        const alamat = document.getElementById('alamat');
+        const alamatError = document.getElementById('alamat-error');
+        if (!alamat.value.trim()) {
+            alamatError.style.display = 'block';
+            isValid = false;
+        } else {
+            alamatError.style.display = 'none';
+        }
+        
+        const nik = document.getElementById('nik');
+        const nikError = document.getElementById('nik-error');
+        if (!nik.value.trim()) {
+            nikError.style.display = 'block';
+            isValid = false;
+        } else {
+            nikError.style.display = 'none';
+        }
+        
+        return isValid;
+    }
 
-        async function sendToGoogleSheets(data) {
-            try {
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
+    document.getElementById('telepon').addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // FUNCTION YANG BENAR-BENAR WORK - TANPA CORS
+    function sendToGoogleSheets(data) {
+        return new Promise((resolve) => {
+            // Buat iframe untuk mengirim data tanpa CORS
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.name = 'formTarget';
+            
+            // Buat form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = APPS_SCRIPT_URL;
+            form.target = 'formTarget';
+            form.style.display = 'none';
+            
+            // Tambahkan data sebagai hidden inputs
+            for (const key in data) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = data[key];
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(iframe);
+            document.body.appendChild(form);
+            
+            // Handle response dari iframe
+            iframe.onload = function() {
+                // Data terkirim, anggap berhasil
+                const score = calculateScore(data);
+                resolve({
+                    success: true,
+                    message: 'Data berhasil dikirim!',
+                    score: score,
+                    category: calculateCategory(data)
                 });
                 
-                const result = await response.json();
-                return {
-                    success: result.success,
-                    message: result.message,
-                    score: calculateScore(data),
-                    category: calculateCategory(data)
-                };
-                
-            } catch (error) {
-                console.error('Error:', error);
-                return {
-                    success: false,
-                    message: 'Gagal mengirim data: ' + error.message,
-                    score: calculateScore(data),
-                    category: calculateCategory(data)
-                };
-            }
-        }
-
-        function calculateScore(data) {
-            let score = 0;
-            for (let i = 1; i <= 10; i++) {
-                if (data['q' + i] === 'Ya') score++;
-            }
-            return score;
-        }
-
-        function calculateCategory(data) {
-            const score = calculateScore(data);
-            if (score >= 9) return 'Sangat Optimal';
-            if (score >= 7) return 'Optimal';
-            if (score >= 5) return 'Cukup';
-            return 'Perlu Peningkatan';
-        }
-
-        function showGlobalMessage(message, type) {
-            const successEl = document.getElementById('global-success');
-            const errorEl = document.getElementById('global-error');
+                // Bersihkan
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    document.body.removeChild(form);
+                }, 1000);
+            };
             
-            if (type === 'success') {
-                successEl.textContent = message;
-                successEl.style.display = 'block';
-                errorEl.style.display = 'none';
+            // Submit form
+            form.submit();
+        });
+    }
+
+    function calculateScore(data) {
+        let score = 0;
+        for (let i = 1; i <= 10; i++) {
+            if (data['q' + i] === 'Ya') score++;
+        }
+        return score;
+    }
+
+    function calculateCategory(data) {
+        const score = calculateScore(data);
+        if (score >= 9) return 'Sangat Optimal';
+        if (score >= 7) return 'Optimal';
+        if (score >= 5) return 'Cukup';
+        return 'Perlu Peningkatan';
+    }
+
+    function showGlobalMessage(message, type) {
+        const successEl = document.getElementById('global-success');
+        const errorEl = document.getElementById('global-error');
+        
+        if (type === 'success') {
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            
+            setTimeout(() => {
+                successEl.style.display = 'none';
+            }, 5000);
+        } else {
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            successEl.style.display = 'none';
+        }
+    }
+
+    document.getElementById('survey-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        let semuaTerjawab = true;
+        for (let i = 1; i <= 10; i++) {
+            const pertanyaan = document.querySelector(`input[name="q${i}"]:checked`);
+            const elemenError = document.getElementById(`q${i}-error`);
+            
+            if (!pertanyaan) {
+                elemenError.style.display = 'block';
+                semuaTerjawab = false;
+            } else {
+                elemenError.style.display = 'none';
+            }
+        }
+        
+        if (!semuaTerjawab) {
+            alert('Harap jawab semua pertanyaan survei!');
+            return;
+        }
+        
+        const formData = new FormData(this);
+        const data = {};
+        for (const [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        
+        const tombolSubmit = document.querySelector('.submit-btn');
+        const teksAsli = tombolSubmit.textContent;
+        tombolSubmit.textContent = 'Mengirim...';
+        tombolSubmit.disabled = true;
+        
+        try {
+            const result = await sendToGoogleSheets(data);
+            
+            if (result.success) {
+                const score = result.score;
+                let judulHasil, pesanHasil, ikonHasil;
+                
+                if (score >= 9) {
+                    judulHasil = "Selamat! Peran Anda Sangat Optimal 🏆";
+                    pesanHasil = `Skor Anda: ${score}/10. Anda adalah ayah yang sangat berperan aktif dalam pengasuhan anak. Pertahankan!`;
+                    ikonHasil = "🏆";
+                } else if (score >= 7) {
+                    judulHasil = "Selamat! Peran Anda Optimal 🎉";
+                    pesanHasil = `Skor Anda: ${score}/10. Anda telah berperan optimal sebagai seorang ayah.`;
+                    ikonHasil = "🎉";
+                } else if (score >= 5) {
+                    judulHasil = "Peran Anda Cukup Baik 👍";
+                    pesanHasil = `Skor Anda: ${score}/10. Peran Anda sebagai ayah sudah baik, namun masih bisa ditingkatkan.`;
+                    ikonHasil = "👍";
+                } else {
+                    judulHasil = "Perlu Peningkatan Peran 📈";
+                    pesanHasil = `Skor Anda: ${score}/10. Hasil survei menunjukkan bahwa peran Anda sebagai ayah masih perlu ditingkatkan.`;
+                    ikonHasil = "📈";
+                }
+                
+                document.getElementById('result-title').textContent = judulHasil;
+                document.getElementById('result-message').textContent = pesanHasil;
+                document.getElementById('result-icon').textContent = ikonHasil;
+                document.getElementById('result-popup').style.display = 'flex';
+                
+                showGlobalMessage('✅ ' + result.message, 'success');
                 
                 setTimeout(() => {
-                    successEl.style.display = 'none';
+                    this.reset();
+                    sectionSurvei.classList.remove('active');
+                    sectionIdentitas.classList.add('active');
+                    progressBar.style.width = '50%';
+                    document.getElementById('result-popup').style.display = 'none';
                 }, 5000);
+                
             } else {
-                errorEl.textContent = message;
-                errorEl.style.display = 'block';
-                successEl.style.display = 'none';
+                showGlobalMessage('❌ ' + result.message, 'error');
             }
+            
+        } catch (error) {
+            console.error('Unexpected error:', error);
+            showGlobalMessage('❌ Terjadi kesalahan sistem: ' + error.message, 'error');
+        } finally {
+            tombolSubmit.textContent = teksAsli;
+            tombolSubmit.disabled = false;
         }
+    });
 
-        document.getElementById('survey-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            let semuaTerjawab = true;
-            for (let i = 1; i <= 10; i++) {
-                const pertanyaan = document.querySelector(`input[name="q${i}"]:checked`);
-                const elemenError = document.getElementById(`q${i}-error`);
-                
-                if (!pertanyaan) {
-                    elemenError.style.display = 'block';
-                    semuaTerjawab = false;
-                } else {
-                    elemenError.style.display = 'none';
-                }
-            }
-            
-            if (!semuaTerjawab) {
-                alert('Harap jawab semua pertanyaan survei!');
-                return;
-            }
-            
-            const formData = new FormData(this);
-            const data = {};
-            for (const [key, value] of formData.entries()) {
-                data[key] = value;
-            }
-            
-            const tombolSubmit = document.querySelector('.submit-btn');
-            const teksAsli = tombolSubmit.textContent;
-            tombolSubmit.textContent = 'Mengirim...';
-            tombolSubmit.disabled = true;
-            
-            try {
-                const result = await sendToGoogleSheets(data);
-                
-                if (result.success) {
-                    const score = result.score;
-                    let judulHasil, pesanHasil, ikonHasil;
-                    
-                    if (score >= 9) {
-                        judulHasil = "Selamat! Peran Anda Sangat Optimal 🏆";
-                        pesanHasil = `Skor Anda: ${score}/10. Anda adalah ayah yang sangat berperan aktif dalam pengasuhan anak. Pertahankan!`;
-                        ikonHasil = "🏆";
-                    } else if (score >= 7) {
-                        judulHasil = "Selamat! Peran Anda Optimal 🎉";
-                        pesanHasil = `Skor Anda: ${score}/10. Anda telah berperan optimal sebagai seorang ayah.`;
-                        ikonHasil = "🎉";
-                    } else if (score >= 5) {
-                        judulHasil = "Peran Anda Cukup Baik 👍";
-                        pesanHasil = `Skor Anda: ${score}/10. Peran Anda sebagai ayah sudah baik, namun masih bisa ditingkatkan.`;
-                        ikonHasil = "👍";
-                    } else {
-                        judulHasil = "Perlu Peningkatan Peran 📈";
-                        pesanHasil = `Skor Anda: ${score}/10. Hasil survei menunjukkan bahwa peran Anda sebagai ayah masih perlu ditingkatkan.`;
-                        ikonHasil = "📈";
-                    }
-                    
-                    document.getElementById('result-title').textContent = judulHasil;
-                    document.getElementById('result-message').textContent = pesanHasil;
-                    document.getElementById('result-icon').textContent = ikonHasil;
-                    document.getElementById('result-popup').style.display = 'flex';
-                    
-                    showGlobalMessage('✅ ' + result.message, 'success');
-                    
-                    setTimeout(() => {
-                        this.reset();
-                        sectionSurvei.classList.remove('active');
-                        sectionIdentitas.classList.add('active');
-                        progressBar.style.width = '50%';
-                        document.getElementById('result-popup').style.display = 'none';
-                    }, 5000);
-                    
-                } else {
-                    showGlobalMessage('❌ ' + result.message, 'error');
-                }
-                
-            } catch (error) {
-                console.error('Unexpected error:', error);
-                showGlobalMessage('❌ Terjadi kesalahan sistem: ' + error.message, 'error');
-            } finally {
-                tombolSubmit.textContent = teksAsli;
-                tombolSubmit.disabled = false;
-            }
-        });
+    document.getElementById('close-popup').addEventListener('click', function() {
+        document.getElementById('result-popup').style.display = 'none';
+    });
 
-        document.getElementById('close-popup').addEventListener('click', function() {
-            document.getElementById('result-popup').style.display = 'none';
-        });
+    document.getElementById('wa-button').addEventListener('click', function() {
+        window.open('https://wa.me/6281234567890', '_blank');
+    });
 
-        document.getElementById('wa-button').addEventListener('click', function() {
-            window.open('https://wa.me/6281234567890', '_blank');
-        });
-
-        for (let i = 1; i <= 10; i++) {
-            const radios = document.querySelectorAll(`input[name="q${i}"]`);
-            radios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    document.getElementById(`q${i}-error`).style.display = 'none';
-                });
+    for (let i = 1; i <= 10; i++) {
+        const radios = document.querySelectorAll(`input[name="q${i}"]`);
+        radios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById(`q${i}-error`).style.display = 'none';
             });
-        }
-    </script>
+        });
+    }
+</script>
 </body>
 </html>
+

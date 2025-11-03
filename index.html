@@ -734,8 +734,8 @@
     </div>
 
     <script>
-        // URL Web App Google Apps Script - SESUAIKAN DENGAN URL ANDA
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyPodYcJrhx9REIA4-8LycQgNEZXwvNkSl-mOzwYajEz3znOv6C56YUnEiSHjWvfvFsag/exec';
+        // URL Web App Google Apps Script - SUDAH DIGANTI DENGAN URL BARU ANDA
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzakhS8Ys7nzlJGfG-l6OmIRcs0VqIXREg_Tvsn1hD14Vos8mHz-7YkMB13bB8RBvAuRg/exec';
 
         // Simulate loading process
         document.addEventListener('DOMContentLoaded', function() {
@@ -872,58 +872,30 @@
             this.value = this.value.replace(/[^0-9]/g, '');
         });
 
-        // Function untuk mengirim data ke Google Apps Script
-        function sendToGoogleAppsScript(data) {
-            return new Promise((resolve) => {
-                const xhr = new XMLHttpRequest();
-                const url = WEB_APP_URL;
+        // Function untuk mengirim data ke Google Apps Script (DIPERBAIKI)
+        async function sendToGoogleAppsScript(data) {
+            console.log('Mengirim data ke Google Apps Script:', data);
+            
+            try {
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
                 
-                xhr.open('POST', url, true);
-                xhr.setRequestHeader('Content-Type', 'application/json');
+                const result = await response.json();
+                console.log('Response dari server:', result);
+                return result;
                 
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4) {
-                        console.log('Response status:', xhr.status);
-                        console.log('Response text:', xhr.responseText);
-                        
-                        if (xhr.status === 200 || xhr.status === 0) {
-                            try {
-                                const result = JSON.parse(xhr.responseText);
-                                resolve(result);
-                            } catch (e) {
-                                resolve({
-                                    success: false,
-                                    message: 'Error parsing response: ' + e.message
-                                });
-                            }
-                        } else {
-                            resolve({
-                                success: false,
-                                message: 'HTTP Error: ' + xhr.status
-                            });
-                        }
-                    }
+            } catch (error) {
+                console.error('Error mengirim data:', error);
+                return {
+                    success: false,
+                    message: 'Network error: ' + error.message
                 };
-                
-                xhr.onerror = function() {
-                    console.error('XHR Network Error');
-                    resolve({
-                        success: false,
-                        message: 'Network error occurred'
-                    });
-                };
-                
-                xhr.timeout = 30000;
-                xhr.ontimeout = function() {
-                    resolve({
-                        success: false,
-                        message: 'Request timeout'
-                    });
-                };
-                
-                console.log('Data yang dikirim:', data);
-                xhr.send(JSON.stringify(data));
-            });
+            }
         }
 
         // Helper function untuk hitung skor
@@ -961,7 +933,7 @@
             }
         }
 
-        // Form submission handler
+        // Form submission handler (DIPERBAIKI)
         document.getElementById('survey-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -993,7 +965,7 @@
                 data[key] = value;
             }
             
-            console.log('Data form:', data);
+            console.log('Data form yang akan dikirim:', data);
             
             // Tampilkan status loading
             const tombolSubmit = document.querySelector('.submit-btn');
@@ -1001,11 +973,9 @@
             tombolSubmit.textContent = 'Mengirim...';
             tombolSubmit.disabled = true;
             
-            let result;
-            
             try {
                 // Kirim data ke Google Apps Script
-                result = await sendToGoogleAppsScript(data);
+                const result = await sendToGoogleAppsScript(data);
                 console.log('Result from server:', result);
                 
                 if (result.success) {
@@ -1045,7 +1015,7 @@
                 
             } catch (error) {
                 console.error('Unexpected error:', error);
-                showGlobalMessage('❌ Terjadi kesalahan sistem', 'error');
+                showGlobalMessage('❌ Terjadi kesalahan sistem: ' + error.message, 'error');
             } finally {
                 // Reset status tombol
                 tombolSubmit.textContent = teksAsli;
@@ -1062,6 +1032,32 @@
         document.getElementById('wa-button').addEventListener('click', function() {
             // Ganti dengan link WhatsApp group Anda
             window.open('https://wa.me/yourgroup', '_blank');
+        });
+
+        // Test connection to Google Apps Script
+        async function testConnection() {
+            try {
+                const response = await fetch(WEB_APP_URL);
+                const result = await response.json();
+                console.log('Test connection result:', result);
+                return result;
+            } catch (error) {
+                console.error('Test connection failed:', error);
+                return null;
+            }
+        }
+
+        // Test connection on load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                testConnection().then(result => {
+                    if (result && result.message) {
+                        console.log('✅ Koneksi ke Google Apps Script berhasil');
+                    } else {
+                        console.log('❌ Koneksi ke Google Apps Script gagal');
+                    }
+                });
+            }, 2000);
         });
     </script>
 </body>

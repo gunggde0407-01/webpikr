@@ -714,7 +714,8 @@
     </div>
 
     <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAANNUfSkp-Fsjf4NTu073m_oREQ1F-m6_KUy6XakwS7fBybzNovNn2YcO12klZf5EYQ/exec';
+    // URL Google Apps Script YANG BENAR
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPuaZUclNB3PL2O72X0ibs2_nfwgKHa61M5iag91VICOADfgWNX1YJHgAAdHqMCrL5ig/exec';
 
     document.addEventListener('DOMContentLoaded', function() {
         const loadingScreen = document.getElementById('loading-screen');
@@ -834,54 +835,31 @@
         this.value = this.value.replace(/[^0-9]/g, '');
     });
 
-    // FUNCTION YANG BENAR-BENAR WORK - TANPA CORS
-    function sendToGoogleSheets(data) {
-        return new Promise((resolve) => {
-            // Buat iframe untuk mengirim data tanpa CORS
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.name = 'formTarget';
+    // FUNGSI UTAMA UNTUK KIRIM KE GOOGLE SHEETS
+    async function sendToGoogleSheets(data) {
+        try {
+            console.log('Mengirim data:', data);
             
-            // Buat form
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = APPS_SCRIPT_URL;
-            form.target = 'formTarget';
-            form.style.display = 'none';
+            const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            console.log('Response dari server:', result);
             
-            // Tambahkan data sebagai hidden inputs
-            for (const key in data) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = data[key];
-                form.appendChild(input);
-            }
+            return result;
             
-            document.body.appendChild(iframe);
-            document.body.appendChild(form);
-            
-            // Handle response dari iframe
-            iframe.onload = function() {
-                // Data terkirim, anggap berhasil
-                const score = calculateScore(data);
-                resolve({
-                    success: true,
-                    message: 'Data berhasil dikirim!',
-                    score: score,
-                    category: calculateCategory(data)
-                });
-                
-                // Bersihkan
-                setTimeout(() => {
-                    document.body.removeChild(iframe);
-                    document.body.removeChild(form);
-                }, 1000);
+        } catch (error) {
+            console.error('Error:', error);
+            return {
+                success: false,
+                message: 'Gagal terhubung ke server: ' + error.message
             };
-            
-            // Submit form
-            form.submit();
-        });
+        }
     }
 
     function calculateScore(data) {
@@ -892,8 +870,7 @@
         return score;
     }
 
-    function calculateCategory(data) {
-        const score = calculateScore(data);
+    function calculateCategory(score) {
         if (score >= 9) return 'Sangat Optimal';
         if (score >= 7) return 'Optimal';
         if (score >= 5) return 'Cukup';
@@ -922,6 +899,7 @@
     document.getElementById('survey-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        // Validasi semua pertanyaan terjawab
         let semuaTerjawab = true;
         for (let i = 1; i <= 10; i++) {
             const pertanyaan = document.querySelector(`input[name="q${i}"]:checked`);
@@ -936,26 +914,42 @@
         }
         
         if (!semuaTerjawab) {
-            alert('Harap jawab semua pertanyaan survei!');
+            showGlobalMessage('Harap jawab semua pertanyaan survei!', 'error');
             return;
         }
         
-        const formData = new FormData(this);
-        const data = {};
-        for (const [key, value] of formData.entries()) {
-            data[key] = value;
-        }
+        // Kumpulkan data form
+        const data = {
+            nama: document.getElementById('nama').value,
+            telepon: document.getElementById('telepon').value,
+            alamat: document.getElementById('alamat').value,
+            nik: document.getElementById('nik').value,
+            q1: document.querySelector('input[name="q1"]:checked')?.value || '',
+            q2: document.querySelector('input[name="q2"]:checked')?.value || '',
+            q3: document.querySelector('input[name="q3"]:checked')?.value || '',
+            q4: document.querySelector('input[name="q4"]:checked')?.value || '',
+            q5: document.querySelector('input[name="q5"]:checked')?.value || '',
+            q6: document.querySelector('input[name="q6"]:checked')?.value || '',
+            q7: document.querySelector('input[name="q7"]:checked')?.value || '',
+            q8: document.querySelector('input[name="q8"]:checked')?.value || '',
+            q9: document.querySelector('input[name="q9"]:checked')?.value || '',
+            q10: document.querySelector('input[name="q10"]:checked')?.value || ''
+        };
         
+        // Tampilkan loading state
         const tombolSubmit = document.querySelector('.submit-btn');
         const teksAsli = tombolSubmit.textContent;
         tombolSubmit.textContent = 'Mengirim...';
         tombolSubmit.disabled = true;
         
         try {
+            // Kirim ke Google Apps Script
             const result = await sendToGoogleSheets(data);
             
             if (result.success) {
-                const score = result.score;
+                const score = calculateScore(data);
+                const category = calculateCategory(score);
+                
                 let judulHasil, pesanHasil, ikonHasil;
                 
                 if (score >= 9) {
@@ -976,20 +970,13 @@
                     ikonHasil = "📈";
                 }
                 
+                // Tampilkan hasil
                 document.getElementById('result-title').textContent = judulHasil;
                 document.getElementById('result-message').textContent = pesanHasil;
                 document.getElementById('result-icon').textContent = ikonHasil;
                 document.getElementById('result-popup').style.display = 'flex';
                 
                 showGlobalMessage('✅ ' + result.message, 'success');
-                
-                setTimeout(() => {
-                    this.reset();
-                    sectionSurvei.classList.remove('active');
-                    sectionIdentitas.classList.add('active');
-                    progressBar.style.width = '50%';
-                    document.getElementById('result-popup').style.display = 'none';
-                }, 5000);
                 
             } else {
                 showGlobalMessage('❌ ' + result.message, 'error');
@@ -1006,12 +993,18 @@
 
     document.getElementById('close-popup').addEventListener('click', function() {
         document.getElementById('result-popup').style.display = 'none';
+        // Reset form dan kembali ke section identitas
+        document.getElementById('survey-form').reset();
+        sectionSurvei.classList.remove('active');
+        sectionIdentitas.classList.add('active');
+        progressBar.style.width = '50%';
     });
 
     document.getElementById('wa-button').addEventListener('click', function() {
         window.open('https://wa.me/6281234567890', '_blank');
     });
 
+    // Event listeners untuk validasi real-time
     for (let i = 1; i <= 10; i++) {
         const radios = document.querySelectorAll(`input[name="q${i}"]`);
         radios.forEach(radio => {
@@ -1020,7 +1013,23 @@
             });
         });
     }
+
+    // Validasi real-time untuk field identitas
+    document.getElementById('nama').addEventListener('input', function() {
+        document.getElementById('nama-error').style.display = 'none';
+    });
+    
+    document.getElementById('telepon').addEventListener('input', function() {
+        document.getElementById('telepon-error').style.display = 'none';
+    });
+    
+    document.getElementById('alamat').addEventListener('input', function() {
+        document.getElementById('alamat-error').style.display = 'none';
+    });
+    
+    document.getElementById('nik').addEventListener('input', function() {
+        document.getElementById('nik-error').style.display = 'none';
+    });
 </script>
 </body>
 </html>
-

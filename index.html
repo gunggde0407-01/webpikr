@@ -889,7 +889,7 @@
         }
     }
 
-    // HANDLE FORM SUBMISSION
+    // HANDLE FORM SUBMISSION - TANPA APPS SCRIPT
     document.getElementById('survey-form').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -950,7 +950,7 @@
             document.getElementById('result-icon').textContent = ikonHasil;
             document.getElementById('result-popup').style.display = 'flex';
             
-            showGlobalMessage('✅ Data berhasil dikirim ke Google Form!', 'success');
+            showGlobalMessage('✅ Data berhasil dikirim!', 'success');
             
             // Reset tombol
             tombolSubmit.textContent = teksAsli;

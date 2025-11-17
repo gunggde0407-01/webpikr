@@ -35,7 +35,6 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: opacity 0.5s ease;
         }
 
         .loading-logo {
@@ -473,7 +472,7 @@
 <body>
     <div id="loading-screen">
         <div class="loading-logo">
-            <img src="logopikr.png" alt="Logo Survei Peran Ayah" id="loading-logo">
+            <img src="logopikr.png" alt="Logo Survei Peran Ayah" id="loading-logo" onerror="this.style.display='none'">
         </div>
         <div class="loading-text">Memuat Survei Peran Ayah</div>
         <div class="loading-bar">
@@ -484,7 +483,7 @@
     <div class="container" id="main-content">
         <header>
             <div class="header-logo">
-                <img src="logopikr.png" alt="Logo Survei Peran Ayah" id="header-logo">
+                <img src="logopikr.png" alt="Logo Survei Peran Ayah" id="header-logo" onerror="this.style.display='none'">
             </div>
             <h1>Survei Peran Ayah</h1>
             <p>Isi data diri dan jawab pertanyaan berikut untuk mengevaluasi peran Anda sebagai ayah</p>
@@ -705,44 +704,55 @@
     <div class="popup" id="result-popup">
         <div class="popup-content">
             <div class="popup-logo">
-                <img src="logopikr.png" alt="Logo Survei Peran Ayah" id="popup-logo">
+                <img src="logopikr.png" alt="Logo Survei Peran Ayah" id="popup-logo" onerror="this.style.display='none'">
             </div>
             <div class="result-icon" id="result-icon">📊</div>
             <h2 id="result-title">Hasil Survei</h2>
             <p id="result-message"></p>
             <div class="popup-buttons">
-                <button class="popup-btn wa-btn" id="wa-button">Gabung Grup WA</button>
+                <button class="popup-btn wa-btn" id="tips-button">Tips & Trik Ayah Pahlawan</button>
                 <button class="popup-btn close-btn" id="close-popup">Tutup</button>
             </div>
         </div>
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const loadingScreen = document.getElementById('loading-screen');
-        const loadingProgress = document.getElementById('loading-progress');
-        const mainContent = document.getElementById('main-content');
+    // LOADING SCREEN YANG PASTI BEKERJA
+    console.log('=== MEMULAI LOADING SCREEN ===');
+    
+    // Inisialisasi langsung - tidak pakai event listener
+    const loadingScreen = document.getElementById('loading-screen');
+    const loadingProgress = document.getElementById('loading-progress');
+    const mainContent = document.getElementById('main-content');
+    
+    // Pastikan loading screen tampil dan main content disembunyikan
+    loadingScreen.style.display = 'flex';
+    mainContent.style.display = 'none';
+    
+    console.log('Loading screen ditampilkan');
+    
+    // Animasi progress bar
+    let progress = 0;
+    const interval = setInterval(function() {
+        progress += 1;
+        loadingProgress.style.width = progress + '%';
         
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 5;
-            loadingProgress.style.width = `${progress}%`;
+        console.log('Progress: ' + progress + '%');
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+            console.log('Loading selesai, menampilkan konten utama');
             
-            if (progress >= 100) {
-                clearInterval(interval);
-                setTimeout(() => {
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                        mainContent.style.display = 'block';
-                    }, 500);
-                }, 500);
-            }
-        }, 100);
-        
-        checkLogoExists();
-    });
+            // Tunggu sebentar lalu sembunyikan loading
+            setTimeout(function() {
+                loadingScreen.style.display = 'none';
+                mainContent.style.display = 'block';
+                console.log('Konten utama ditampilkan');
+            }, 300);
+        }
+    }, 30);
 
+    // Fungsi check logo
     function checkLogoExists() {
         const logo = new Image();
         logo.src = 'logopikr.png';
@@ -754,6 +764,10 @@
         }
     }
 
+    // Panggil fungsi check logo setelah loading
+    setTimeout(checkLogoExists, 1500);
+
+    // Event listener untuk upload logo
     document.getElementById('logo-file').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
@@ -769,6 +783,7 @@
         }
     });
 
+    // Navigasi form sections
     const sectionIdentitas = document.getElementById('section-identitas');
     const sectionSurvei = document.getElementById('section-survei');
     const progressBar = document.getElementById('progress-bar');
@@ -789,6 +804,7 @@
         progressBar.style.width = '50%';
     });
 
+    // Validasi identitas
     function validateIdentitas() {
         let isValid = true;
         
@@ -832,10 +848,12 @@
         return isValid;
     }
 
+    // Format telepon
     document.getElementById('telepon').addEventListener('input', function(e) {
         this.value = this.value.replace(/[^0-9]/g, '');
     });
 
+    // Fungsi kalkulasi skor
     function calculateScore() {
         let score = 0;
         for (let i = 1; i <= 10; i++) {
@@ -870,6 +888,7 @@
         return 'Perlu Peningkatan';
     }
 
+    // Fungsi pesan global
     function showGlobalMessage(message, type) {
         const successEl = document.getElementById('global-success');
         const errorEl = document.getElementById('global-error');
@@ -889,7 +908,7 @@
         }
     }
 
-    // HANDLE FORM SUBMISSION - TANPA APPS SCRIPT
+    // Handle form submission
     document.getElementById('survey-form').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -927,7 +946,7 @@
             let judulHasil, pesanHasil, ikonHasil;
             
             if (score >= 9) {
-                judulHasil = "Selamat! Peran Anda Sangat Optimal 🏆";
+                judulHasil = "Selamat! Anda Telah Menjadi Pahlawan Ayah Bagi Anak 🏆";
                 pesanHasil = `Skor Anda: ${score}/10. Anda adalah ayah yang sangat berperan aktif dalam pengasuhan anak. Pertahankan!`;
                 ikonHasil = "🏆";
             } else if (score >= 7) {
@@ -935,8 +954,8 @@
                 pesanHasil = `Skor Anda: ${score}/10. Anda telah berperan optimal sebagai seorang ayah.`;
                 ikonHasil = "🎉";
             } else if (score >= 5) {
-                judulHasil = "Peran Anda Cukup Baik 👍";
-                pesanHasil = `Skor Anda: ${score}/10. Peran Anda sebagai ayah sudah baik, namun masih bisa ditingkatkan.`;
+                judulHasil = "Peran Anda Cukup Dekat Untuk Menjadi Pahlawan Ayah 👍";
+                pesanHasil = `Skor Anda: ${score}/10. Peran Anda sebagai ayah sudah baik, namun tetap harus ditingkatkan.`;
                 ikonHasil = "👍";
             } else {
                 judulHasil = "Perlu Peningkatan Peran 📈";
@@ -962,20 +981,141 @@
         }, 1000);
     });
 
+    // Event listener untuk popup
     document.getElementById('close-popup').addEventListener('click', function() {
         document.getElementById('result-popup').style.display = 'none';
-        // Reset form dan kembali ke section identitas
         document.getElementById('survey-form').reset();
         sectionSurvei.classList.remove('active');
         sectionIdentitas.classList.add('active');
         progressBar.style.width = '50%';
     });
 
-    document.getElementById('wa-button').addEventListener('click', function() {
-        window.open('https://wa.me/6281234567890', '_blank');
+    // Event listener untuk tips button
+    document.getElementById('tips-button').addEventListener('click', function() {
+        const tipsWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+        tipsWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="id">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Mari Menjadi Ayah Pahlawan bagi Anak</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #f5f7fa;
+                    }
+                    h1 {
+                        color: #1a73e8;
+                        text-align: center;
+                        margin-bottom: 30px;
+                        padding-bottom: 15px;
+                        border-bottom: 2px solid #1a73e8;
+                    }
+                    h2 {
+                        color: #1a73e8;
+                        margin-top: 30px;
+                        margin-bottom: 15px;
+                    }
+                    .tips-section {
+                        background-color: white;
+                        border-radius: 10px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    }
+                    .tips-list {
+                        padding-left: 20px;
+                    }
+                    .tips-list li {
+                        margin-bottom: 10px;
+                    }
+                    .quote {
+                        font-style: italic;
+                        background-color: #f0f7ff;
+                        padding: 15px;
+                        border-left: 4px solid #1a73e8;
+                        margin: 20px 0;
+                    }
+                    .action-button {
+                        background-color: #1a73e8;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        display: block;
+                        margin: 30px auto;
+                        text-align: center;
+                    }
+                    .action-button:hover {
+                        background-color: #0d5bb9;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Mari Menjadi Ayah Pahlawan bagi Anak</h1>
+                
+                <div class="tips-section">
+                    <h2>Tips & Trik Menjadi Ayah Pahlawan</h2>
+                    <p>Menjadi ayah yang hebat bukan tentang kesempurnaan, tetapi tentang kehadiran dan keterlibatan. Berikut adalah beberapa tips untuk membantu Anda menjadi pahlawan bagi anak-anak Anda:</p>
+                    
+                    <ul class="tips-list">
+                        <li><strong>Luangkan waktu berkualitas:</strong> Tidak perlu waktu lama, tetapi pastikan waktu yang Anda habiskan bersama anak benar-benar berkualitas dan bebas dari gangguan.</li>
+                        <li><strong>Jadilah pendengar yang baik:</strong> Dengarkan cerita anak dengan penuh perhatian, tanpa menghakimi atau langsung memberikan solusi.</li>
+                        <li><strong>Tunjukkan kasih sayang secara fisik:</strong> Pelukan, ciuman, dan sentuhan lembut sangat penting untuk perkembangan emosional anak.</li>
+                        <li><strong>Terlibat dalam pendidikan:</strong> Bantu anak dengan pekerjaan rumah, hadiri pertemuan sekolah, dan tunjukkan minat pada prestasi akademik mereka.</li>
+                        <li><strong>Jadilah teladan:</strong> Anak-anak belajar lebih banyak dari apa yang mereka lihat daripada apa yang mereka dengar.</li>
+                        <li><strong>Bermain bersama:</strong> Bermain adalah bahasa universal anak-anak. Bergabunglah dalam dunia mereka melalui permainan.</li>
+                        <li><strong>Ajarkan nilai-nilai kehidupan:</strong> Bagikan pengalaman dan pelajaran hidup yang dapat membentuk karakter anak.</li>
+                        <li><strong>Bersikap konsisten:</strong> Konsistensi dalam aturan dan disiplin memberikan rasa aman dan batasan yang jelas bagi anak.</li>
+                        <li><strong>Rayakan pencapaian kecil:</strong> Akui dan hargai usaha dan pencapaian anak, sekecil apa pun.</li>
+                        <li><strong>Jaga komunikasi dengan ibu:</strong> Kerja sama yang baik dengan pasangan adalah fondasi penting untuk pengasuhan anak yang sehat.</li>
+                    </ul>
+                </div>
+                
+                <div class="tips-section">
+                    <h2>Membangun Koneksi Emosional</h2>
+                    <p>Koneksi emosional adalah inti dari hubungan ayah-anak yang kuat. Berikut cara memperkuatnya:</p>
+                    
+                    <ul class="tips-list">
+                        <li><strong>Kenali bahasa cinta anak:</strong> Setiap anak memiliki cara berbeda dalam menerima dan memberikan cinta.</li>
+                        <li><strong>Buat ritual keluarga:</strong> Kegiatan rutin seperti makan malam bersama atau membaca cerita sebelum tidur dapat memperkuat ikatan.</li>
+                        <li><strong>Ajarkan regulasi emosi:</strong> Bantu anak mengenali dan mengelola emosi mereka dengan cara yang sehat.</li>
+                        <li><strong>Berikan pujian yang spesifik:</strong> Daripada sekadar "kamu hebat", cobalah "Ayah bangga dengan caramu menyelesaikan masalah tadi".</li>
+                    </ul>
+                    
+                    <div class="quote">
+                        "Anak-anak tidak membutuhkan ayah yang sempurna. Mereka membutuhkan ayah yang hadir, yang mencoba, yang berkomitmen, dan yang tidak pernah berhenti belajar menjadi lebih baik."
+                    </div>
+                </div>
+                
+                <div class="tips-section">
+                    <h2>Mengatasi Tantangan</h2>
+                    <p>Setiap ayah menghadapi tantangan. Berikut strategi untuk mengatasinya:</p>
+                    
+                    <ul class="tips-list">
+                        <li><strong>Kelola stres dengan sehat:</strong> Anak-anak belajar mengelola stres dengan melihat bagaimana Anda melakukannya.</li>
+                        <li><strong>Jangan takut meminta maaf:</strong> Mengakui kesalahan mengajarkan anak tentang kerendahan hati dan tanggung jawab.</li>
+                        <li><strong>Cari dukungan:</strong> Bergabunglah dengan kelompok ayah atau cari mentor yang dapat memberikan perspektif dan saran.</li>
+                        <li><strong>Prioritaskan keseimbangan:</strong> Temukan keseimbangan antara pekerjaan, tanggung jawab keluarga, dan waktu untuk diri sendiri.</li>
+                    </ul>
+                </div>
+                
+                <button class="action-button" onclick="window.print()">Cetak Tips & Trik</button>
+            </body>
+            </html>
+        `);
+        tipsWindow.document.close();
     });
 
-    // Event listeners untuk validasi real-time
+    // Validasi real-time
     for (let i = 1; i <= 10; i++) {
         const entryId = getEntryId(i);
         const radios = document.querySelectorAll(`input[name="entry.${entryId}"]`);
@@ -1002,6 +1142,8 @@
     document.getElementById('nik').addEventListener('input', function() {
         document.getElementById('nik-error').style.display = 'none';
     });
-</script>
+
+    console.log('=== SEMUA SCRIPT DIEKSEKUSI ===');
+    </script>
 </body>
 </html>
